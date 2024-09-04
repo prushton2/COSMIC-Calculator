@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: {{LICENSE}}
 
+use std::fmt;
+use std::fmt::write;
 use crate::config::Config;
 use crate::fl;
 use cosmic::app::{Command, Core};
@@ -38,6 +40,12 @@ pub enum Message {
     UpdateConfig(Config),
 }
 
+pub enum Page {
+    Simple,
+    Programmer,
+    Scientific
+}
+
 /// Create a COSMIC application from the app model
 impl Application for AppModel {
     /// The async executor that will be used to run your application's commands.
@@ -66,20 +74,20 @@ impl Application for AppModel {
         let mut nav = nav_bar::Model::default();
 
         nav.insert()
-            .text(fl!("page-id", num = 1))
-            .data::<Page>(Page::Page1)
-            .icon(icon::from_name("applications-science-symbolic"))
+            .text("Simple")
+            .data::<Page>(Page::Simple)
+            .icon(icon::from_name("applications-games-symbolic"))
             .activate();
 
         nav.insert()
-            .text(fl!("page-id", num = 2))
-            .data::<Page>(Page::Page2)
+            .text("Programmer")
+            .data::<Page>(Page::Programmer)
             .icon(icon::from_name("applications-system-symbolic"));
 
         nav.insert()
-            .text(fl!("page-id", num = 3))
-            .data::<Page>(Page::Page3)
-            .icon(icon::from_name("applications-games-symbolic"));
+            .text("Scientific")
+            .data::<Page>(Page::Scientific)
+            .icon(icon::from_name("applications-science-symbolic"));
 
         // Construct the app model with the runtime's core.
         let mut app = AppModel {
@@ -142,7 +150,7 @@ impl Application for AppModel {
     /// Application events will be processed through the view. Any messages emitted by
     /// events received by widgets will be passed to the update method.
     fn view(&self) -> Element<Self::Message> {
-        widget::text::title1("custom title")
+        widget::text::title1("welcome")
             .apply(widget::container)
             .width(Length::Fill)
             .height(Length::Fill)
@@ -188,6 +196,7 @@ impl Application for AppModel {
     /// Commands may be returned for asynchronous execution of code in the background
     /// on the application's async runtime.
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+        println!("{}", message);
         match message {
             Message::OpenRepositoryUrl => {
                 _ = open::that_detached(REPOSITORY);
@@ -262,13 +271,6 @@ impl AppModel {
     }
 }
 
-/// The page to display in the application.
-pub enum Page {
-    Page1,
-    Page2,
-    Page3,
-}
-
 /// The context page to display in the context drawer.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum ContextPage {
@@ -296,5 +298,18 @@ impl menu::action::MenuAction for MenuAction {
         match self {
             MenuAction::About => Message::ToggleContextPage(ContextPage::About),
         }
+    }
+}
+
+
+
+impl fmt::Display for Message {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+       match self {
+            Message::OpenRepositoryUrl => write!(f, "OpenRepositoryUrl"),
+            Message::SubscriptionChannel => write!(f, "SubscriptionChannel"),
+            Message::ToggleContextPage(_ContextPage) => write!(f, "ToggleContextPage"),
+            Message::UpdateConfig(_Config) => write!(f, "UpdateConfig"),
+       }
     }
 }
