@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: {{LICENSE}}
 
 use std::fmt;
+use std::fmt::write;
 use crate::config::Config;
 use crate::fl;
 use cosmic::app::{Command, Core};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::alignment::{Horizontal, Vertical};
-use cosmic::iced::{Alignment, Length};
+use cosmic::iced::{Alignment, Length, Subscription};
 use cosmic::widget::{self, icon, menu, nav_bar};
 use cosmic::{cosmic_theme, theme, Application, ApplicationExt, Apply, Element};
+use futures_util::SinkExt;
 use std::collections::HashMap;
 
-use crate::ui::{Message, Page, ContextPage};
-use crate::calculators::{simple, programmer, scientific};
-
+const REPOSITORY: &str = "https://github.com/pop-os/cosmic-app-template";
 const APP_ICON: &[u8] = include_bytes!("../res/icons/hicolor/scalable/apps/icon.svg");
 
 /// The application model stores app-specific state used to describe its interface and
@@ -29,7 +29,22 @@ pub struct AppModel {
     key_binds: HashMap<menu::KeyBind, MenuAction>,
     // Configuration data that persists between application runs.
     config: Config,
-    page: Page
+}
+
+/// Messages emitted by the application and its widgets.
+#[derive(Debug, Clone)]
+pub enum Message {
+    OpenRepositoryUrl,
+    SubscriptionChannel,
+    ToggleContextPage(ContextPage),
+    UpdateConfig(Config),
+    SetPage
+}
+
+pub enum Page {
+    Simple,
+    Programmer,
+    Scientific
 }
 
 /// Create a COSMIC application from the app model
@@ -44,7 +59,7 @@ impl Application for AppModel {
     type Message = Message;
 
     /// Unique identifier in RDNN (reverse domain name notation) format.
-    const APP_ID: &'static str = "com.prushton.CosmicCalculator";
+    const APP_ID: &'static str = "com.example.CosmicAppTemplate";
 
     fn core(&self) -> &Core {
         &self.core
@@ -94,7 +109,6 @@ impl Application for AppModel {
                     }
                 })
                 .unwrap_or_default(),
-            page: Page::Simple
         };
 
         // Create a startup command that sets the window title.
@@ -137,35 +151,45 @@ impl Application for AppModel {
     /// Application events will be processed through the view. Any messages emitted by
     /// events received by widgets will be passed to the update method.
     fn view(&self) -> Element<Self::Message> {
-        match self.page {
-            Page::Simple => {
-                simple::render()
-                    .apply(widget::container)
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .align_x(Horizontal::Center)
-                    .align_y(Vertical::Center)
-                    .into()
-            },
-            Page::Programmer => {
-                programmer::render()
-                    .apply(widget::container)
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .align_x(Horizontal::Center)
-                    .align_y(Vertical::Center)
-                    .into()
-            },
-            Page::Scientific => {
-                scientific::render()
-                    .apply(widget::container)
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .align_x(Horizontal::Center)
-                    .align_y(Vertical::Center)
-                    .into()
-            }
-        }
+        widget::text::title1("welcome")
+            .apply(widget::container)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .align_x(Horizontal::Center)
+            .align_y(Vertical::Center)
+            .into()
+    }
+
+    /// Register subscriptions for this application.
+    ///
+    /// Subscriptions are long-running async tasks running in the background which
+    /// emit messages to the application through a channel. They are started at the
+    /// beginning of the application, and persist through its lifetime.
+    fn subscription(&self) -> Subscription<Self::Message> {
+        struct MySubscription;
+
+        Subscription::batch(vec![
+            // Create a subscription which emits updates through a channel.
+            cosmic::iced::subscription::channel(
+                std::any::TypeId::of::<MySubscription>(),
+                4,
+                move |mut channel| async move {
+                    _ = channel.send(Message::SubscriptionChannel).await;
+
+                    futures_util::future::pending().await
+                },
+            ),
+            // Watch for application configuration changes.
+            self.core()
+                .watch_config::<Config>(Self::APP_ID)
+                .map(|update| {
+                    // for why in update.errors {
+                    //     tracing::error!(?why, "app config error");
+                    // }
+
+                    Message::UpdateConfig(update.config)
+                }),
+        ])
     }
 
     /// Handles messages emitted by the application and its widgets.
@@ -173,7 +197,16 @@ impl Application for AppModel {
     /// Commands may be returned for asynchronous execution of code in the background
     /// on the application's async runtime.
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+        println!("{}", message);
         match message {
+            Message::OpenRepositoryUrl => {
+                _ = open::that_detached(REPOSITORY);
+            }
+
+            Message::SubscriptionChannel => {
+                // For example purposes only.
+            }
+
             Message::ToggleContextPage(context_page) => {
                 if self.context_page == context_page {
                     // Close the context drawer if the toggled context page is the same.
@@ -192,30 +225,22 @@ impl Application for AppModel {
                 self.config = config;
             }
 
-            Message::SetPage(page) => {
-                self.page = page;
+            Message::SetPage => {
+                println!("Setting page");
             }
-
         }
         Command::none()
     }
 
     /// Called when a nav item is selected.
     fn on_nav_select(&mut self, id: nav_bar::Id) -> Command<Self::Message> {
-        let pages: [Page; 3] = [
-            Page::Simple,
-            Page::Programmer,
-            Page::Scientific
-        ];
-
         // Activate the page in the model.
+        // println!("on nav select {}", id);
         self.nav.activate(id);
         
-        return cosmic::command::message(
-            cosmic::app::Message::App(
-                    Message::SetPage(pages[self.nav.position(id).unwrap() as usize])
-                )
-            );
+        //self.update_title()
+
+        return Message::SetPage(Page::Scientific);
     }
 }
 
@@ -228,9 +253,14 @@ impl AppModel {
 
         let title = widget::text::title3(fl!("app-title"));
 
+        let link = widget::button::link(REPOSITORY)
+            .on_press(Message::OpenRepositoryUrl)
+            .padding(0);
+
         widget::column()
             .push(icon)
             .push(title)
+            .push(link)
             .align_items(Alignment::Center)
             .spacing(space_xxs)
             .into()
@@ -250,11 +280,11 @@ impl AppModel {
 }
 
 /// The context page to display in the context drawer.
-//#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
-//pub enum ContextPage {
-//    #[default]
-//    About,
-//}
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+pub enum ContextPage {
+    #[default]
+    About,
+}
 
 impl ContextPage {
     fn title(&self) -> String {
@@ -279,12 +309,16 @@ impl menu::action::MenuAction for MenuAction {
     }
 }
 
-impl fmt::Display for Page {
+
+
+impl fmt::Display for Message {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
        match self {
-            Page::Simple => write!(f, "Simple"),
-            Page::Programmer => write!(f, "Programmer"),
-            Page::Scientific => write!(f, "Scientific")
+            Message::OpenRepositoryUrl => write!(f, "OpenRepositoryUrl"),
+            Message::SubscriptionChannel => write!(f, "SubscriptionChannel"),
+            Message::ToggleContextPage(_ContextPage) => write!(f, "ToggleContextPage"),
+            Message::UpdateConfig(_Config) => write!(f, "UpdateConfig"),
+            Message::SetPage => write!(f, "SetPage"),
        }
     }
 }

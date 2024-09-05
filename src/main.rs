@@ -3,6 +3,8 @@
 mod app;
 mod config;
 mod i18n;
+mod ui;
+mod calculators;
 
 fn main() -> cosmic::iced::Result {
     // Get the system's preferred languages.
