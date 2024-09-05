@@ -1,8 +1,9 @@
 // dont really know what to call this but it contains stuff to prevent circular imports
 
-use cosmic::widget::{Id, button, Button, container, text, Text, Style};
+use cosmic::widget::{Id, button, Button, container, text, Text, Style, text_input};
 use cosmic::iced::widget::{column, row};
 use cosmic::iced;
+use cosmic::iced_core;
 use cosmic::Element;
 use cosmic::widget::button::Builder;
 use std::borrow::Cow;
@@ -48,7 +49,16 @@ pub enum Key {
     n7,
     n8,
     n9,
-    n0
+    n0,
+
+    dot,
+
+    plus,
+    negative,
+    multiply,
+    divide,
+
+    equals
 }
 
 //pub const buttonAppearance: button::Appearance = button::Appearance {
@@ -63,29 +73,17 @@ pub enum Key {
 //};
 
 pub fn styled_button<'a>(label: &'a str, key: Key) -> Element<'a, Message> {
-
+   button(label)
+       .width(100)
+       .height(100)
+       .on_press(Message::KeyPressEvent(key))
+       .into()
 }
 
-pub fn base_calc() -> Element<'static, Message> {
-    let spacing: f32 = 12.0;
-    return container(
-        column![
-            row![
-                styled_button("7", Key::n7),
-                styled_button("8", Key::n8),
-                styled_button("9", Key::n9),
-            ].spacing(Pixels(spacing)),
-            row![
-                styled_button("4", Key::n4),
-                styled_button("5", Key::n5),
-                styled_button("6", Key::n6),
-            ].spacing(Pixels(spacing)),
-            row![
-                styled_button("1", Key::n1),
-                styled_button("2", Key::n2),
-                styled_button("3", Key::n3),
-            ].spacing(Pixels(spacing)),
-        ].spacing(Pixels(spacing))
-        
-    ).into();
+
+pub fn styled_input<'a>() -> Element<'a, Message> {
+    text_input::TextInput::new(
+        "placeholder",
+        &this.textfield
+    ).into()
 }
