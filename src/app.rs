@@ -29,7 +29,8 @@ pub struct AppModel {
     key_binds: HashMap<menu::KeyBind, MenuAction>,
     // Configuration data that persists between application runs.
     config: Config,
-    page: Page
+    page: Page,
+    textfield: String
 }
 
 /// Create a COSMIC application from the app model
@@ -94,7 +95,8 @@ impl Application for AppModel {
                     }
                 })
                 .unwrap_or_default(),
-            page: Page::Simple
+            page: Page::Simple,
+            textfield: String::from("test"),
         };
 
         // Create a startup command that sets the window title.
@@ -139,7 +141,7 @@ impl Application for AppModel {
     fn view(&self) -> Element<Self::Message> {
         match self.page {
             Page::Simple => {
-                simple::render()
+                simple::render(&self)
                     .apply(widget::container)
                     .width(Length::Fill)
                     .height(Length::Fill)
