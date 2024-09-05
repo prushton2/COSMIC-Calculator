@@ -1,12 +1,17 @@
 // dont really know what to call this but it contains stuff to prevent circular imports
 
-use cosmic::widget::{button, Button, container, text, Text};
+use cosmic::widget::{Id, button, Button, container, text, Text, Style};
 use cosmic::iced::widget::{column, row};
 use cosmic::iced;
 use cosmic::Element;
+use cosmic::widget::button::Builder;
+use std::borrow::Cow;
 
-use cosmic::iced_winit::graphics::core::{Pixels, Length, Padding};
-//use cosmic::iced_winit::graphics::core::Vector;
+use cosmic::theme;
+use crate::ui::core::font::Weight;
+
+use cosmic::iced_winit::graphics::core::{Size, Pixels, Length, Padding};
+use cosmic::iced_winit::graphics::core;
 //use cosmic::iced_winit::graphics::core::border::Radius;
 
 use crate::config::Config;
@@ -58,11 +63,7 @@ pub enum Key {
 //};
 
 pub fn styled_button<'a>(label: &'a str, key: Key) -> Element<'a, Message> {
-   text(label)
-       .into()
-   // button(label)
-   //     .on_press(Message::KeyPressEvent(key))
-   //     .into()
+
 }
 
 pub fn base_calc() -> Element<'static, Message> {
