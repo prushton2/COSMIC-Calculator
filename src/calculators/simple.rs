@@ -1,8 +1,8 @@
 use cosmic::widget::{button, container};
 use cosmic::Element;
 
-use crate::ui::{Message, Page};
+use crate::ui::{Message, Page, base_calc};
 
 pub fn render() -> Element<'static, Message> {
-    return container(button("Test")).into();
+    return base_calc();
 }

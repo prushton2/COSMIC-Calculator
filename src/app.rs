@@ -106,10 +106,10 @@ impl Application for AppModel {
     /// Elements to pack at the start of the header bar.
     fn header_start(&self) -> Vec<Element<Self::Message>> {
         let menu_bar = menu::bar(vec![menu::Tree::with_children(
-            menu::root(fl!("view")),
+            menu::root("Menu"),
             menu::items(
                 &self.key_binds,
-                vec![menu::Item::Button(fl!("about"), MenuAction::About)],
+                vec![menu::Item::Button("About", MenuAction::About)],
             ),
         )]);
 
@@ -194,6 +194,10 @@ impl Application for AppModel {
 
             Message::SetPage(page) => {
                 self.page = page;
+            }
+
+            Message::KeyPressEvent(Key) => {
+                println!("Key press!!!!");
             }
 
         }

@@ -1,11 +1,11 @@
 // dont really know what to call this but it contains stuff to prevent circular imports
 
-use cosmic::widget::{button, Button, container};
+use cosmic::widget::{button, Button, container, text, Text};
 use cosmic::iced::widget::{column, row};
+use cosmic::iced;
 use cosmic::Element;
 
 use cosmic::iced_winit::graphics::core::{Pixels, Length, Padding};
-use cosmic::iced;
 //use cosmic::iced_winit::graphics::core::Vector;
 //use cosmic::iced_winit::graphics::core::border::Radius;
 
@@ -57,12 +57,12 @@ pub enum Key {
 //    active:     
 //};
 
-pub fn styled_button<'a>(label: &'a str, key: Key) -> Button<'a, Message> {
-    button(label)
-        .width(Length::Fixed(100.0))
-        .height(Length::Fixed(100.0))
-        .padding(Padding::fit(iced::Size::new(30.0, 30.0), iced::Size::new(90.0, 90.0)))
-        .on_press(Message::KeyPressEvent(key))
+pub fn styled_button<'a>(label: &'a str, key: Key) -> Element<'a, Message> {
+   text(label)
+       .into()
+   // button(label)
+   //     .on_press(Message::KeyPressEvent(key))
+   //     .into()
 }
 
 pub fn base_calc() -> Element<'static, Message> {
